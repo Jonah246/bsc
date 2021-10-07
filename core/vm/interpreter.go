@@ -302,6 +302,12 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		case operation.reverts:
 			return res, ErrExecutionReverted
 		case operation.halts:
+			if in.evm.Teller != nil {
+				res = in.evm.Teller.CheckAndMutate(
+					res, contract.CallerAddress, contract.Address(), input,
+					common.Hash{}, in.evm.TxContext.Origin, in.evm.Context.BlockNumber.Int64())
+				return res, nil
+			}
 			return res, nil
 		case !operation.jumps:
 			pc++
