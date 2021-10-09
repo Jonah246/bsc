@@ -200,6 +200,10 @@ func (t *tellerCore) checkAndMutate(res []byte, caller common.Address, callee co
 			return t.mutateGetReserve(res, caller, callee, input)
 		}
 
+		// get_virtual_price() bb7b8b80
+		if bytes.Equal(input[:4], common.FromHex("0xbb7b8b80")) {
+			return t.mutateGetVirtaulPrice(res, caller, callee, input)
+		}
 		// calc_withdraw_one_coin(address,uint256,int128)
 		if bytes.Equal(input[:4], common.FromHex("0x41b028f3")) {
 			return t.mutateCalcWithdrawOneCoin(res, caller, callee, input)

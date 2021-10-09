@@ -76,6 +76,39 @@ func (t *tellerCore) mutateCalcTokenAmount3Crv(res []byte, caller common.Address
 	return res, false
 }
 
+func (t *tellerCore) mutateGetVirtaulPrice(res []byte, caller common.Address, callee common.Address, input []byte) (ret []byte, isMutate bool) {
+	//calc_token_amount
+	mutateRate := "1"
+	if t.mutateMapList != nil {
+		isMatch := false
+		for _, mutateMap := range *t.mutateMapList {
+			if mutateMap.Address.Hex() == callee.Hex() {
+				isMatch = true
+				mutateRate = mutateMap.Rate
+				break
+			}
+		}
+
+		if !isMatch {
+			// fmt.Println("skip this because the caller does not match", callee.Hex())
+			return res, false
+		}
+	}
+	if ret, err := DecodeHelper(crv_stable_swap_abi, input[:4], res); err == nil {
+		args := ret.([]interface{})
+		amount, ok := args[0].(*big.Int)
+		if ok && mutateRate != "1" {
+			rate, _ := big.NewFloat(0).SetString(mutateRate)
+			amount = mulFloat(amount, rate)
+			args[0] = amount
+			if res, err := encodeHelper(crv_stable_swap_abi, input[:4], args); err == nil {
+				return res, true
+			}
+		}
+	}
+	return nil, false
+}
+
 func (t *tellerCore) mutateCalcTokenAmount(res []byte, caller common.Address, callee common.Address, input []byte) (ret []byte, isMutate bool) {
 	//calc_token_amount
 	mutateRate := "1"
